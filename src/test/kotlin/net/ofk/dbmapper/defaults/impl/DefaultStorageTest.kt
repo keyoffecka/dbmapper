@@ -60,4 +60,11 @@ class DefaultStorageTest {
     } catch(ex: IllegalStateException) {
     }
   }
+
+  @Test
+  fun escape() {
+    s.escape("abc")
+
+    Mockito.verify(engine).escape("abc")
+  }
 }

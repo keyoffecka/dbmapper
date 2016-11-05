@@ -18,7 +18,7 @@ class MySQL5EngineTest {
 
     eng.prepareConnection(conn)
 
-    Assert.assertEquals("mysql", eng.variant)
+    Assert.assertEquals("mysql", eng.variant())
 
     var o = Mockito.inOrder(st)
     o.verify(st).execute("set time_zone = '+00:00'")
@@ -34,5 +34,13 @@ class MySQL5EngineTest {
 
     o = Mockito.inOrder(st)
     o.verify(st).close()
+  }
+
+  @Test
+  fun testEscape() {
+    val eng = MySQL5Engine()
+
+    Assert.assertEquals("abcd", eng.escape("abcd"))
+    Assert.assertEquals("\\'\\\\ab\\'\\'cd\\'\\Z\\t\\r\\n\\b\\\"\\0", eng.escape("'\\ab''cd'\u001A\t\r\n\b\"\u0000"))
   }
 }

@@ -9,6 +9,5 @@ import java.sql.Connection
  */
 class DefaultEngine : BaseEngine(DefaultFormatterBuilder.build()) {
   override fun prepareConnection(conn: Connection) {}
-  override val variant: String = ""
+  override fun variant() = ""
 }
-

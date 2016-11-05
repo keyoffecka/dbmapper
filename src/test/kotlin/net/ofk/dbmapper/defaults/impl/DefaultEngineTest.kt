@@ -47,4 +47,10 @@ class DefaultEngineTest {
       Assert.assertEquals("Please pass the missing parameter `b': :a, :b", e.message)
     }
   }
+
+  @Test
+  fun testEscape() {
+    Assert.assertEquals("abcd", e!!.escape("abcd"))
+    Assert.assertEquals("''ab''''cd''", e!!.escape("'ab''cd'"))
+  }
 }

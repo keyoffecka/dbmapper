@@ -105,4 +105,6 @@ abstract class BaseEngine(private val dateFormatter: DateFormat) : Engine {
         throw IllegalArgumentException("Unsupported type ${value.javaClass.name}");
       }
     }
+
+  override fun escape(value: String): String = value.replace("'", "''")
 }

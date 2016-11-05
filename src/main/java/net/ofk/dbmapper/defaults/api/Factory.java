@@ -1,6 +1,6 @@
-package net.ofk.dbmapper.defaults.api
+package net.ofk.dbmapper.defaults.api;
 
-import java.sql.Connection
+import java.sql.Connection;
 
 /**
  * The only responsibility of the factory is to produce connections.
@@ -8,10 +8,10 @@ import java.sql.Connection
  * Factories are introduced and are only used by the default session implementation.
  * Other session implementations may use their own approaches to produce connections.
  */
-interface Factory {
+public interface Factory {
   /**
    * Every time the method is called a new connection should be created
    * and returned.
    */
-  fun create(): Connection
+  Connection create();
 }

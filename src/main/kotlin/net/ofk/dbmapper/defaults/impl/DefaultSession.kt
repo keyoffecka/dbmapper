@@ -21,13 +21,13 @@ class DefaultSession(
     }
   }
 
-  override fun release(connection: Connection) {
+  override fun release(conn: Connection) {
     synchronized(connections) {
-      if (!connections.remove(connection)) {
+      if (!connections.remove(conn)) {
         throw IllegalStateException()
       }
     }
-    connection.close()
+    conn.close()
   }
 
   override fun invalidate(conn: Connection, prev: Exception) {

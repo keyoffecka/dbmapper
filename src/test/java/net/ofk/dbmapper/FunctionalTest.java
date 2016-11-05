@@ -71,7 +71,7 @@ public class FunctionalTest {
           Lists.newArrayList(
             new FunctionalTest.A(4, "a3a"),
             new FunctionalTest.A(2, "a1a")
-          ), ss.sel(rs -> {
+          ), ss.select(rs -> {
             return new FunctionalTest.A(rs.getInt("id") + 1, rs.getString("name") + "a");
           }, "select * from A where id!=:id and id!=:id order by id desc;", "id", 2)
         )
@@ -143,7 +143,7 @@ public class FunctionalTest {
 
   @Test
   public void testBadInsert() throws Exception {
-    Transaction<ResultSet> tx = new DefaultTransaction(new DefaultSession(new DefaultFactory("jdbc:h2:mem:test3;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=FALSE", null, null)), new DefaultEngine());
+    DefaultTransaction tx = new DefaultTransaction(new DefaultSession(new DefaultFactory("jdbc:h2:mem:test3;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=FALSE", null, null)), new DefaultEngine());
 
     tx.exec(Q.class, (q, s) -> {
       s.update(q.create());

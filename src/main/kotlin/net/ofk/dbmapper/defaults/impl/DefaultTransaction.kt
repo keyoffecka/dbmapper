@@ -1,10 +1,12 @@
 package net.ofk.dbmapper.defaults.impl
 
 import net.ofk.dbmapper.QueryFactory
-import net.ofk.dbmapper.api.TransactionExecutable
 import net.ofk.dbmapper.api.Storage
 import net.ofk.dbmapper.api.Transaction
-import net.ofk.dbmapper.api.TransactionExecutableWithQueries
+import net.ofk.dbmapper.api.Transaction.TransactionCallable
+import net.ofk.dbmapper.api.Transaction.TransactionCallableWithQueries
+import net.ofk.dbmapper.api.Transaction.TransactionExecutable
+import net.ofk.dbmapper.api.Transaction.TransactionExecutableWithQueries
 import net.ofk.dbmapper.defaults.api.Engine
 import net.ofk.dbmapper.defaults.api.Session
 import net.ofk.kutils.JRE8Utils
@@ -27,20 +29,20 @@ class DefaultTransaction(private val session: Session, private val engine: Engin
   private val queries = hashMapOf<Class<*>, Any>()
   private val queryFactory = QueryFactory()
 
+  override fun <T> call(callable: TransactionCallable<ResultSet, T>): T {
+    return doExecute<T, Any>(null, {queries, storage -> callable.execute(storage)})
+  }
+
+  override fun <Q, T> call(type: Class<Q>, callable: TransactionCallableWithQueries<Q, ResultSet, T>): T {
+    return doExecute(type, {queries, storage -> callable.execute(queries, storage)})
+  }
+
   override fun exec(executable: TransactionExecutable<ResultSet>) {
-    execute({storage -> executable.execute(storage)})
+    doExecute<Unit, Any>(null, {queries, storage -> executable.execute(storage)})
   }
 
-  override fun <T> execute(executable: (Storage<ResultSet>) -> T): T {
-    return doExecute<T, Any>(null, {queries, storage -> executable(storage)})
-  }
-
-  override fun <Q> exec(type: Class<Q>, executable: TransactionExecutableWithQueries<Q, ResultSet>) {
-    execute(type, { queries, storage -> executable.execute(queries, storage) })
-  }
-
-  override fun <T,Q> execute(type: Class<Q>, executable: (queries: Q, Storage<ResultSet>) -> T): T {
-    return doExecute(type, {queries, storage -> executable.invoke(queries!!, storage)})
+  override fun <Q : Any?> exec(type: Class<Q>, executable: TransactionExecutableWithQueries<Q, ResultSet>) {
+    doExecute(type, {queries, storage -> executable.execute(queries, storage)})
   }
 
   private fun <T,Q> doExecute(clazz: Class<Q>?, executable: (queries: Q?, Storage<ResultSet>) -> T): T {
@@ -62,10 +64,10 @@ class DefaultTransaction(private val session: Session, private val engine: Engin
     val result = try {
       executable.invoke(getQueries(clazz), TX.get())
     } catch (ex: Exception) {
-      rollback<T>(conn, ex)
+      doRollback<T>(conn, ex)
     }
 
-    commit(conn)
+    doCommit(conn)
 
     return result
   }
@@ -75,7 +77,7 @@ class DefaultTransaction(private val session: Session, private val engine: Engin
       synchronized(this.queries) {
         var q = this.queries[clazz] as Q?
         if (q == null) {
-          q = queryFactory.create(clazz, engine.variant)
+          q = queryFactory.create(clazz, engine.variant())
           queries[clazz] = q as Any
         }
         q
@@ -84,12 +86,12 @@ class DefaultTransaction(private val session: Session, private val engine: Engin
     return queries
   }
 
-  private fun commit(conn: Connection?) {
+  private fun doCommit(conn: Connection?) {
     if (conn != null) {
       try {
         conn.commit()
       } catch(ex: Exception) {
-        rollback<Any>(conn, ex)
+        doRollback<Any>(conn, ex)
       }
 
       try {
@@ -100,7 +102,7 @@ class DefaultTransaction(private val session: Session, private val engine: Engin
     }
   }
 
-  private fun <T> rollback(conn: Connection?, ex: Exception): T {
+  private fun <T> doRollback(conn: Connection?, ex: Exception): T {
     if (conn != null) {
       try {
         try {
